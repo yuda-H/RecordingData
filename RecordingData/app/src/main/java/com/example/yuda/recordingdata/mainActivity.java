@@ -39,7 +39,7 @@ import jxl.write.WriteException;
 
 public class mainActivity extends AppCompatActivity {
     TextView txtMessage;
-    EditText edtPositionX, edtPositionY;
+    EditText edtPositionX, edtPositionY, edtDelayTime, edtRecordingLimit;
     Button btnScanningWifiInfo,btnReadCreate, btnStartStop, btnCloseXls;
     WifiManager mWifiManager;
     List<ScanResult> lstWifiInfoResult = null;
@@ -51,25 +51,6 @@ public class mainActivity extends AppCompatActivity {
     ArrayAdapter adapter;
     jxlFile mJxlFile = new jxlFile();
 
-/*
-    @Override
-    protected void onPause() {
-        super.onPause();
-
-        if (mJxlFile.onlyRead != null || mJxlFile.copyToWritable != null || mJxlFile.copyToWritableSheet != null) {
-
-
-            try {
-                mJxlFile.stopRecording();
-                mJxlFile.closeWork();
-            } catch (IOException | WriteException | BiffException e) {
-                e.printStackTrace();
-            }
-
-
-        }
-
-    }//*/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,12 +60,17 @@ public class mainActivity extends AppCompatActivity {
         txtMessage = (TextView)findViewById(R.id.txtMessage);
         edtPositionX = (EditText)findViewById(R.id.edtPositionX);
         edtPositionY = (EditText)findViewById(R.id.edtPositionY);
+        edtDelayTime = (EditText)findViewById(R.id.edtDelayTime);
+        edtRecordingLimit = (EditText)findViewById(R.id.edtRecordingLimit);
         btnScanningWifiInfo = (Button)findViewById(R.id.btnScanningWifiInfo);
         btnReadCreate = (Button)findViewById(R.id.btnReadCreate);
         btnStartStop = (Button)findViewById(R.id.btnStartStop);
         btnCloseXls = (Button)findViewById(R.id.btnCloseXls);
         mWifiManager = (WifiManager)getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         lsvShowingInfo = (ListView)findViewById(R.id.lsvShowingfInfo);
+
+
+
 
 
         // scanning wifi information
@@ -112,6 +98,9 @@ public class mainActivity extends AppCompatActivity {
                 adapter = new ArrayAdapter(mainActivity.this,android.R.layout.simple_list_item_multiple_choice,aryWifiInfo);
                 lsvShowingInfo.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
                 lsvShowingInfo.setAdapter(adapter);
+                if (btnReadCreate.getText().equals("cancel all")) {
+                    btnReadCreate.setText("select all");
+                }
             }
         });
 
@@ -148,6 +137,24 @@ public class mainActivity extends AppCompatActivity {
         btnStartStop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+                if (!edtDelayTime.getText().toString().equals("")) {
+                    if (Integer.parseInt(edtDelayTime.getText().toString())<=0) {
+                        Toast.makeText(getApplicationContext(),"Fault enter, the time value must be larger than 0. Times still is "
+                                +mJxlFile.delayTime,Toast.LENGTH_SHORT).show();
+                    } else {
+                        mJxlFile.delayTime = Integer.parseInt(edtDelayTime.getText().toString());
+                    }
+                } else { mJxlFile.delayTime = 1; }
+                if (!edtRecordingLimit.getText().toString().equals("")) {
+                    if (Integer.parseInt(edtRecordingLimit.getText().toString())<=0) {
+                        Toast.makeText(getApplicationContext(),"Fault enter, the recording total must be larger than 0. Limit still is "
+                                +mJxlFile.dataRecordsLimits,Toast.LENGTH_SHORT).show();
+                    } else {
+                        mJxlFile.dataRecordsLimits = Integer.parseInt(edtRecordingLimit.getText().toString());
+                    }
+                } else { mJxlFile.dataRecordsLimits = 30; }
+
 
                 if (btnReadCreate.getText().toString().equals("excel")) {
                     Toast.makeText(getApplicationContext(),"Please press EXCEL before START.",Toast.LENGTH_SHORT).show();
@@ -231,6 +238,8 @@ public class mainActivity extends AppCompatActivity {
         int dataRecordsLimits = 30;
         int count  = 1;
 
+
+
         void getExcel() throws IOException, WriteException, BiffException {
             if (!mFolder.exists()) {
                 mFolder.mkdirs();
@@ -256,7 +265,6 @@ public class mainActivity extends AppCompatActivity {
             final int getExcelRows = this.copyToWritableSheet.getRows();
             String positionX = edtPositionX.getText().toString();
             String positionY = edtPositionY.getText().toString();
-
 
             for (int i=0; i<choseWifiNameAndBssid[0].length; i++) {
                 this.copyToWritableSheet.addCell(new Label(0,getExcelRows+i,choseWifiNameAndBssid[0][i]));
